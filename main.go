@@ -14,6 +14,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type NewUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // var dbpool *pgxpool.Pool
 
 func main() {
@@ -44,9 +49,29 @@ func main() {
 		fmt.Println("Hello, World!")
 		c.IndentedJSON(http.StatusOK, "Welcome to the backend.")
 	})
+	router.POST("/login", loginUser)
+	router.POST("/register", registerUser)
 
 	router.Run()
 }
 
-// func getUser(c *gin.Context) {
-// }
+func registerUser(c *gin.Context) {
+	var user NewUser
+
+	// Bind JSON fields from form data.
+	if err := c.BindJSON(&user); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	// Validate form inputs for invalid characters and check if username is taken.
+
+	// Bind hashed password to user variable.
+
+	// Send query to backend to register user.
+
+	// Send JWT to client.
+}
+
+func loginUser(c *gin.Context) {
+}
