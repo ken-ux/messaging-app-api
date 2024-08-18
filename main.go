@@ -11,12 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	// "github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 )
 
 type NewUser struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required,min=5,max=20,alphanum"`
+	Password string `json:"password" validate:"required,min=5,max=20"`
 }
 
 // var dbpool *pgxpool.Pool
@@ -64,13 +65,26 @@ func registerUser(c *gin.Context) {
 		return
 	}
 
+	fmt.Println(user)
+
 	// Validate form inputs for invalid characters and check if username is taken.
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	// Validate the User struct
+	if err := validate.Struct(user); err != nil {
+		// Validation failed, handle the error
+		errors := err.(validator.ValidationErrors)
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Validation error: %v", errors))
+		return
+	}
 
 	// Bind hashed password to user variable.
 
 	// Send query to backend to register user.
 
 	// Send JWT to client.
+
+	c.IndentedJSON(http.StatusOK, "success")
 }
 
 func loginUser(c *gin.Context) {
