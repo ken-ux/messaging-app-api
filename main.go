@@ -97,19 +97,19 @@ func registerUser(c *gin.Context) {
 	}
 
 	// Encode user-specific information into token.
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"sub": user.Username,
 			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
 
 	// Sign token with key.
-	s, err := t.SignedString(key)
+	signedToken, err := token.SignedString(key)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
 	}
 
-	c.IndentedJSON(http.StatusOK, s)
+	c.IndentedJSON(http.StatusOK, signedToken)
 }
 
 func loginUser(c *gin.Context) {
