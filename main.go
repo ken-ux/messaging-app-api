@@ -15,6 +15,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -70,19 +71,21 @@ func registerUser(c *gin.Context) {
 	// Validate form input.
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	if err := validate.Struct(user); err != nil {
-		// Validation failed, handle the error
 		errors := err.(validator.ValidationErrors)
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Validation error: %v", errors))
 		return
 	}
 
-	fmt.Println(user)
+	// Check that username isn't taken.
 
-	// Bind hashed password to user variable.
+	// Hash password and re-bind to user variable.
+	password, err := HashPassword(user.Password)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Encryption error: %v", err))
+	}
+	user.Password = password
 
-	fmt.Println(user)
-
-	// Send query to backend to register user.
+	// Add user to database.
 
 	// Send JWT to client.
 	// Load secret and cast from string to []byte.
@@ -108,4 +111,23 @@ func registerUser(c *gin.Context) {
 }
 
 func loginUser(c *gin.Context) {
+	var user User
+
+	// Bind JSON fields from form data.
+	if err := c.BindJSON(&user); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	// check := CheckPasswordHash(user.Password /*query for hashed password from database */)
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
