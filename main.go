@@ -1,19 +1,20 @@
 package main
 
 import (
-	// "context"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,7 +24,7 @@ type User struct {
 	Password string `json:"password" validate:"required,min=5,max=20"`
 }
 
-// var dbpool *pgxpool.Pool
+var dbpool *pgxpool.Pool
 
 func main() {
 	// Load dev environment.
@@ -36,13 +37,13 @@ func main() {
 	}
 
 	// Connect to database.
-	// var dbpool_err error
-	// dbpool, dbpool_err = pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
-	// if dbpool_err != nil {
-	// 	fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", dbpool_err)
-	// 	os.Exit(1)
-	// }
-	// defer dbpool.Close()
+	var dbpool_err error
+	dbpool, dbpool_err = pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	if dbpool_err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", dbpool_err)
+		os.Exit(1)
+	}
+	defer dbpool.Close()
 
 	router := gin.Default()
 
@@ -79,11 +80,11 @@ func registerUser(c *gin.Context) {
 	// Check that username isn't taken.
 
 	// Hash password and re-bind to user variable.
-	password, err := HashPassword(user.Password)
+	hash, err := HashPassword(user.Password)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Encryption error: %v", err))
 	}
-	user.Password = password
+	user.Password = hash
 
 	// Add user to database.
 
@@ -99,6 +100,7 @@ func registerUser(c *gin.Context) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"sub": user.Username,
+			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
 
 	// Sign token with key.
@@ -119,7 +121,7 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	// check := CheckPasswordHash(user.Password /*query for hashed password from database */)
+	// match := CheckPasswordHash(user.Password /*query for hashed password from database */)
 }
 
 func HashPassword(password string) (string, error) {
