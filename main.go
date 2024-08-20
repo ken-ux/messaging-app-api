@@ -78,11 +78,23 @@ func registerUser(c *gin.Context) {
 	}
 
 	// Check that username isn't taken.
+	// err := dbpool.QueryRow(context.Background(), fmt.Sprintf(
+	// 	`SELECT username
+	// 	FROM user
+	// 	WHERE username = '%s'`,
+	// 	user.Username)).
+	// 	Scan(&user.Username)
+
+	// if err != nil {
+	// 	c.IndentedJSON(http.StatusBadRequest, "Username already exists.")
+	// return
+	// }
 
 	// Hash password and re-bind to user variable.
 	hash, err := HashPassword(user.Password)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Encryption error: %v", err))
+		return
 	}
 	user.Password = hash
 
@@ -94,6 +106,7 @@ func registerUser(c *gin.Context) {
 	key, err := base64.RawStdEncoding.DecodeString(secret)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
+		return
 	}
 
 	// Encode user-specific information into token.
@@ -107,6 +120,7 @@ func registerUser(c *gin.Context) {
 	signedToken, err := token.SignedString(key)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
+		return
 	}
 
 	c.IndentedJSON(http.StatusOK, signedToken)
