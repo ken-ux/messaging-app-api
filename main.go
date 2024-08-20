@@ -78,17 +78,17 @@ func registerUser(c *gin.Context) {
 	}
 
 	// Check that username isn't taken.
-	// err := dbpool.QueryRow(context.Background(), fmt.Sprintf(
-	// 	`SELECT username
-	// 	FROM user
-	// 	WHERE username = '%s'`,
-	// 	user.Username)).
-	// 	Scan(&user.Username)
+	err := dbpool.QueryRow(context.Background(), fmt.Sprintf(
+		`SELECT username
+		FROM "user"
+		WHERE username = '%s'`,
+		user.Username)).
+		Scan(&user.Username)
 
-	// if err != nil {
-	// 	c.IndentedJSON(http.StatusBadRequest, "Username already exists.")
-	// return
-	// }
+	if err == nil {
+		c.IndentedJSON(http.StatusBadRequest, "Username already exists.")
+		return
+	}
 
 	// Hash password and re-bind to user variable.
 	hash, err := HashPassword(user.Password)
