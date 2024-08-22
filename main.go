@@ -164,7 +164,42 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	// match := CheckPasswordHash(user.Password /*query for hashed password from database */)
+	// Check if user exists in database.
+	err := dbpool.QueryRow(context.Background(), fmt.Sprintf(
+		`SELECT username
+		FROM "user"
+		WHERE username = '%s'`,
+		user.Username)).
+		Scan(&user.Username)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, "User doesn't exist.")
+		return
+	}
+
+	// Check if password hash matches.
+	var hashedPassword string
+
+	err = dbpool.QueryRow(context.Background(), fmt.Sprintf(
+		`SELECT password
+		FROM "user"
+		WHERE username = '%s'`,
+		user.Username)).
+		Scan(&hashedPassword)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, "Error fetching password.")
+		return
+	}
+
+	match := CheckPasswordHash(user.Password, hashedPassword)
+
+	if !match {
+		c.IndentedJSON(http.StatusBadRequest, "Wrong password.")
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, "woohoo")
 }
 
 func HashPassword(password string) (string, error) {
