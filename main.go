@@ -51,7 +51,6 @@ func main() {
 	router.Use(cors.Default())
 
 	router.GET("/", func(c *gin.Context) {
-		fmt.Println("Hello, World!")
 		c.IndentedJSON(http.StatusOK, "Welcome to the backend.")
 	})
 	router.POST("/login", loginUser)
@@ -130,25 +129,9 @@ func registerUser(c *gin.Context) {
 	}
 
 	// Send JWT to client.
-	// Load secret and cast from string to []byte.
-	secret := os.Getenv("SECRET")
-	key, err := base64.RawStdEncoding.DecodeString(secret)
+	signedToken, err := GetToken(user, c)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
-		return
-	}
-
-	// Encode user-specific information into token.
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"sub": user.Username,
-			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		})
-
-	// Sign token with key.
-	signedToken, err := token.SignedString(key)
-	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
+		// No response sent to context since it's done in the GetToken function.
 		return
 	}
 
@@ -199,7 +182,13 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, "woohoo")
+	// Send JWT to client.
+	signedToken, err := GetToken(user, c)
+	if err != nil {
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, signedToken)
 }
 
 func HashPassword(password string) (string, error) {
@@ -210,4 +199,29 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func GetToken(user User, c *gin.Context) (signedToken string, err error) {
+	// Load secret and cast from string to []byte.
+	secret := os.Getenv("SECRET")
+	key, err := base64.RawStdEncoding.DecodeString(secret)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
+		return
+	}
+
+	// Encode user-specific information into token.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"sub": user.Username,
+			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		})
+
+	// Sign token with key.
+	signedToken, err = token.SignedString(key)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
+		return
+	}
+	return
 }
