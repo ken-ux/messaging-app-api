@@ -99,6 +99,35 @@ func registerUser(c *gin.Context) {
 	user.Password = hash
 
 	// Add user to database.
+	// Begin transaction.
+	tx, err := dbpool.Begin(context.Background())
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	// Rollback transaction if it doesn't commit successfully.
+	defer tx.Rollback(context.Background())
+
+	// Execute insert statement.
+	_, err = tx.Exec(context.Background(), fmt.Sprintf(
+		`INSERT INTO "user" (username, password)
+		VALUES (
+			'%s',
+			'%s'
+		)`,
+		user.Username, user.Password))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	// Commit transaction.
+	err = tx.Commit(context.Background())
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
 
 	// Send JWT to client.
 	// Load secret and cast from string to []byte.
