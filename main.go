@@ -129,7 +129,7 @@ func registerUser(c *gin.Context) {
 	}
 
 	// Send JWT to client.
-	signedToken, err := GetToken(user, c)
+	signedToken, err := GetToken(user)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
 		return
@@ -183,7 +183,7 @@ func loginUser(c *gin.Context) {
 	}
 
 	// Send JWT to client.
-	signedToken, err := GetToken(user, c)
+	signedToken, err := GetToken(user)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("JWT error: %v", err))
 		return
@@ -202,7 +202,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GetToken(user User, c *gin.Context) (signedToken string, err error) {
+func GetToken(user User) (signedToken string, err error) {
 	// Load secret and cast from string to []byte.
 	secret := os.Getenv("SECRET")
 	key, err := base64.RawStdEncoding.DecodeString(secret)
@@ -225,9 +225,10 @@ func GetToken(user User, c *gin.Context) (signedToken string, err error) {
 	return
 }
 
-func ValidateToken(tokenString string, c *gin.Context) bool {
+func ValidateToken(user User, tokenString string) (valid bool, err error) {
+	// Parse token.
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Validate for expected alg aka signing method.
+		// Confirm expected alg aka signing method.
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -242,13 +243,34 @@ func ValidateToken(tokenString string, c *gin.Context) bool {
 	})
 
 	if err != nil {
-		log.Fatal(err)
+		return false, fmt.Errorf("token parsing issue: %v", err)
 	}
 
-	// if claims, ok := token.Claims.(jwt.MapClaims); ok {
-	// 	fmt.Println(claims["foo"], claims["nbf"])
-	// } else {
+	// Extract claims from token.
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return false, fmt.Errorf("issue mapping jwt claims")
+	}
+
+	// Check claims.
+	if claims["sub"] != user.Username {
+		return false, fmt.Errorf("sub doesn't match token")
+	}
+
+	expiry, err := claims.GetExpirationTime()
+	if err != nil {
+		return false, fmt.Errorf("invalid expiry")
+	}
+
+	if time.Now().After(expiry.Time) {
+		return false, fmt.Errorf("token expired")
+	}
+
+	// verified, err := ValidateToken(user, signedToken)
+	// if err != nil {
 	// 	fmt.Println(err)
 	// }
-	return true
+	// fmt.Println(verified)
+
+	return true, nil
 }
