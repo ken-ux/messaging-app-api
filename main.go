@@ -74,19 +74,20 @@ func authenticateUser(c *gin.Context) {
 	}
 
 	reqToken := c.Request.Header["Authorization"]
-	splitToken := strings.Split(reqToken[1], "Bearer ")
+	splitToken := strings.Split(reqToken[0], "Bearer ")
 	if len(splitToken) != 2 {
 		c.IndentedJSON(http.StatusBadRequest, "Bad request: Bearer token not in proper format")
+		return
 	}
 	token := splitToken[1]
-	fmt.Println(token)
 
 	verified, err := ValidateToken(user, token)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
 	}
-	c.IndentedJSON(http.StatusOK, verified)
 
+	c.IndentedJSON(http.StatusOK, verified)
 }
 
 func registerUser(c *gin.Context) {
