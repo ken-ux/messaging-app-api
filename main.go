@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -47,16 +48,45 @@ func main() {
 
 	router := gin.Default()
 
-	// Allow all origins.
-	router.Use(cors.Default())
+	// Set-up CORS policy.
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{os.Getenv("ORIGIN_URL")}
+	config.AllowHeaders = []string{"Authorization", "Content-Type"}
+	router.Use(cors.New(config))
 
 	router.GET("/", func(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, "Welcome to the backend.")
 	})
+	router.POST("/auth", authenticateUser)
 	router.POST("/login", loginUser)
 	router.POST("/register", registerUser)
 
 	router.Run()
+}
+
+func authenticateUser(c *gin.Context) {
+	var user User
+
+	// Bind JSON fields from form data.
+	if err := c.BindJSON(&user); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	reqToken := c.Request.Header["Authorization"]
+	splitToken := strings.Split(reqToken[1], "Bearer ")
+	if len(splitToken) != 2 {
+		c.IndentedJSON(http.StatusBadRequest, "Bad request: Bearer token not in proper format")
+	}
+	token := splitToken[1]
+	fmt.Println(token)
+
+	verified, err := ValidateToken(user, token)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+	}
+	c.IndentedJSON(http.StatusOK, verified)
+
 }
 
 func registerUser(c *gin.Context) {
@@ -265,12 +295,6 @@ func ValidateToken(user User, tokenString string) (valid bool, err error) {
 	if time.Now().After(expiry.Time) {
 		return false, fmt.Errorf("token expired")
 	}
-
-	// verified, err := ValidateToken(user, signedToken)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Println(verified)
 
 	return true, nil
 }
