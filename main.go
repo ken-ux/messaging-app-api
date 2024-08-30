@@ -8,7 +8,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
 	"github.com/ken-ux/messaging-app-api/api"
@@ -19,8 +18,6 @@ type User struct {
 	Username string `json:"username" validate:"required,min=5,max=20,alphanum"`
 	Password string `json:"password" validate:"required,min=5,max=20"`
 }
-
-var dbpool *pgxpool.Pool
 
 func main() {
 	// Load dev environment.
@@ -50,6 +47,7 @@ func main() {
 	router.GET("/", func(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, "Welcome to the backend.")
 	})
+	router.GET("/search", api.SearchUsers)
 	router.POST("/auth", api.AuthenticateUser)
 	router.POST("/login", api.LoginUser)
 	router.POST("/register", api.RegisterUser)
