@@ -14,6 +14,11 @@ func SearchUsers(c *gin.Context) {
 	var userList []defs.User
 	username := c.Query("username")
 
+	if username == "" {
+		c.IndentedJSON(http.StatusOK, userList)
+		return
+	}
+
 	rows, err := db.Pool.Query(context.Background(), fmt.Sprintf(
 		`SELECT username
 		FROM "user"
