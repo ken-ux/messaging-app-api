@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ken-ux/messaging-app-api/db"
@@ -13,6 +14,7 @@ import (
 func SearchUsers(c *gin.Context) {
 	var userList []defs.User
 	username := c.Query("username")
+	username = strings.Trim(username, " ")
 
 	if username == "" {
 		c.IndentedJSON(http.StatusOK, userList)
