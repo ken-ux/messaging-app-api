@@ -3,14 +3,15 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ken-ux/messaging-app-api/db"
+	"github.com/ken-ux/messaging-app-api/defs"
 )
 
 func SearchUsers(c *gin.Context) {
+	var userList []defs.User
 	username := c.Query("username")
 
 	rows, err := db.Pool.Query(context.Background(), fmt.Sprintf(
@@ -25,26 +26,20 @@ func SearchUsers(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	type User struct {
-		username string
-	}
-
-	var userList []User
-
 	for rows.Next() {
-		var user User
-		err := rows.Scan(user.username)
+		var user defs.User
+		err := rows.Scan(&user.Username)
 		if err != nil {
-			log.Fatal(err)
+			c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("query error: %v", err))
+			return
 		}
 		userList = append(userList, user)
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("query error: %v", err))
+		return
 	}
 
-	fmt.Println(userList)
-
-	// return userList
+	c.IndentedJSON(http.StatusOK, userList)
 }
