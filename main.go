@@ -12,6 +12,7 @@ import (
 
 	"github.com/ken-ux/messaging-app-api/api"
 	"github.com/ken-ux/messaging-app-api/db"
+	"github.com/ken-ux/messaging-app-api/ws"
 )
 
 type User struct {
@@ -51,6 +52,7 @@ func main() {
 	router.POST("/auth", api.AuthenticateUser)
 	router.POST("/login", api.LoginUser)
 	router.POST("/register", api.RegisterUser)
+	router.GET("/ws", ws.StartSocket)
 
 	router.Run()
 }
