@@ -33,6 +33,16 @@ func StartSocket(c *gin.Context) {
 	defer conn.Close()
 	for {
 		conn.WriteMessage(websocket.TextMessage, []byte("Hello, WebSocket!"))
-		time.Sleep(time.Second * 3)
+
+		// _, message, err := conn.ReadMessage()
+		// if err != nil {
+		// 	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+		// 		fmt.Printf("error: %v", err)
+		// 	}
+		// 	break
+		// }
+		// fmt.Println(string(message))
+
+		time.Sleep(time.Second * 2)
 	}
 }
