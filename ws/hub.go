@@ -56,9 +56,10 @@ func receiveMessage(conn *websocket.Conn, c1 chan string) {
 
 func sendMessage(conn *websocket.Conn) {
 	for {
-		conn.WriteMessage(websocket.TextMessage, []byte("Hello, WebSocket!"))
+		// conn.WriteMessage(websocket.TextMessage, []byte("Hello, WebSocket!"))
 		time.Sleep(time.Second * 2)
-		// Check if connection is closed
-		fmt.Println("writer still open")
+		if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			break
+		}
 	}
 }
