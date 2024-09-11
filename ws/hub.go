@@ -31,18 +31,34 @@ func StartSocket(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
+
+	c1 := make(chan string)
+
+	go sendMessage(conn)
+	go receiveMessage(conn, c1)
+
+	for msg := range c1 {
+		fmt.Println(msg)
+	}
+}
+
+func receiveMessage(conn *websocket.Conn, c1 chan string) {
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			conn.Close()
+			fmt.Printf("error: %v", err)
+			break
+		}
+		c1 <- string(message)
+	}
+}
+
+func sendMessage(conn *websocket.Conn) {
 	for {
 		conn.WriteMessage(websocket.TextMessage, []byte("Hello, WebSocket!"))
-
-		// _, message, err := conn.ReadMessage()
-		// if err != nil {
-		// 	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-		// 		fmt.Printf("error: %v", err)
-		// 	}
-		// 	break
-		// }
-		// fmt.Println(string(message))
-
 		time.Sleep(time.Second * 2)
+		// Check if connection is closed
+		fmt.Println("writer still open")
 	}
 }
