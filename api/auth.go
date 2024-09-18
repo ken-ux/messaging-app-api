@@ -27,13 +27,12 @@ func AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	reqToken := c.Request.Header["Authorization"]
-	splitToken := strings.Split(reqToken[0], "Bearer ")
-	if len(splitToken) != 2 {
-		c.IndentedJSON(http.StatusBadRequest, "Bad request: Bearer token not in proper format")
+	// Extract JWT from request header.
+	token, err := ParseTokenFromHeader(c)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
 		return
 	}
-	token := splitToken[1]
 
 	verified, err := ValidateToken(user, token)
 	if err != nil {
@@ -242,4 +241,13 @@ func ValidateToken(user defs.User, tokenString string) (valid bool, err error) {
 	}
 
 	return true, nil
+}
+
+func ParseTokenFromHeader(c *gin.Context) (token string, err error) {
+	reqToken := c.Request.Header["Authorization"]
+	splitToken := strings.Split(reqToken[0], "Bearer ")
+	if len(splitToken) != 2 {
+		return "", fmt.Errorf("bearer token not in proper format")
+	}
+	return splitToken[1], nil
 }
