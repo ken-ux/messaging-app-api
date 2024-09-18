@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/ken-ux/messaging-app-api/api"
 )
 
 var upgrader = websocket.Upgrader{
@@ -39,7 +38,7 @@ func StartSocket(c *gin.Context) {
 	go receiveMessage(conn, c1)
 
 	for msg := range c1 {
-		api.PostMessage(msg)
+		fmt.Println(msg)
 	}
 }
 

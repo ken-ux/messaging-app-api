@@ -53,6 +53,8 @@ func main() {
 	router.POST("/login", api.LoginUser)
 	router.POST("/register", api.RegisterUser)
 	router.GET("/ws", ws.StartSocket)
+	router.POST("/message", api.PostMessage)
+	router.GET("/message", api.GetMessage)
 
 	router.Run()
 }
