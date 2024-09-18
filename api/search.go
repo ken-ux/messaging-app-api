@@ -24,7 +24,8 @@ func SearchUsers(c *gin.Context) {
 	rows, err := db.Pool.Query(context.Background(), fmt.Sprintf(
 		`SELECT username
 		FROM "user"
-		WHERE username LIKE '%s%%'`,
+		WHERE username LIKE '%s%%'
+		LIMIT 10`,
 		username,
 	))
 	if err != nil {
