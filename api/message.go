@@ -98,21 +98,39 @@ func GetMessages(c *gin.Context) {
 func queryMessages(messages *[]defs.Message, sender string, recipient string) (err error) {
 	// Query database
 	rows, err := db.Pool.Query(context.Background(), fmt.Sprintf(
-		`SELECT t1.username AS sender, t2.username AS recipient, message_body
+		`SELECT sender, recipient, message_body, creation_date
 		FROM
-			(SELECT message_id, username, message_body
-			FROM message 
-			INNER JOIN "user" ON message.author_id = "user".user_id
-			WHERE username = '%s'
-			ORDER BY creation_date ASC) t1
-		LEFT JOIN
-			(SELECT username, message_id
-			FROM recipient
-			INNER JOIN "user" on recipient.user_id = "user".user_id
-			WHERE username = '%s') t2
-		ON t1.message_id = t2.message_id
-		LIMIT 15`, sender, recipient))
+			(SELECT t1.username AS sender, t2.username AS recipient, message_body, creation_date
+			FROM
+				(SELECT message_id, username, message_body, creation_date
+				FROM message 
+				INNER JOIN "user" ON message.author_id = "user".user_id
+				WHERE username = '%s'
+				ORDER BY creation_date ASC) t1
+			LEFT JOIN
+				(SELECT username, message_id
+				FROM recipient
+				INNER JOIN "user" on recipient.user_id = "user".user_id
+				WHERE username = '%s') t2
+			ON t1.message_id = t2.message_id) tbl_1
+		UNION
+			(SELECT t1.username AS sender, t2.username AS recipient, message_body, creation_date
+			FROM
+				(SELECT message_id, username, message_body, creation_date
+				FROM message 
+				INNER JOIN "user" ON message.author_id = "user".user_id
+				WHERE username = '%s'
+				ORDER BY creation_date ASC) t1
+			LEFT JOIN
+				(SELECT username, message_id
+				FROM recipient
+				INNER JOIN "user" on recipient.user_id = "user".user_id
+				WHERE username = '%s') t2
+			ON t1.message_id = t2.message_id)
+		ORDER BY creation_date
+		LIMIT 15`, sender, recipient, recipient, sender))
 	if err != nil {
+		fmt.Println(err)
 		return fmt.Errorf("query failed: %v", err)
 	}
 
@@ -125,7 +143,8 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 	for rows.Next() {
 		// Loop through rows, using Scan to assign column data to struct fields.
 		var message defs.Message
-		if err := rows.Scan(&message.Sender, &message.Recipient, &message.Message_Body); err != nil {
+		if err := rows.Scan(&message.Sender, &message.Recipient, &message.Message_Body, &message.Creation_Date); err != nil {
+			fmt.Println(err)
 			return fmt.Errorf("query failed: %v", err)
 		}
 		*messages = append(*messages, message)
