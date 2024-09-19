@@ -50,11 +50,11 @@ func main() {
 	})
 	router.GET("/search", api.SearchUsers)
 	router.POST("/auth", api.AuthenticateUser)
-	router.POST("/login", api.LoginUser)
-	router.POST("/register", api.RegisterUser)
+	router.POST("/auth/login", api.LoginUser)
+	router.POST("/auth/register", api.RegisterUser)
 	router.GET("/ws", ws.StartSocket)
 	router.POST("/message", api.PostMessage)
-	router.GET("/message", api.GetMessage)
+	router.GET("/message", api.GetMessages)
 
 	router.Run()
 }
