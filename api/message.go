@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,7 @@ import (
 func PostMessage(c *gin.Context) {
 	var message defs.Message
 
-	// // Bind JSON fields to form variable.
+	// // Bind JSON fields to message variable.
 	if err := c.BindJSON(&message); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
 		return
@@ -63,6 +64,69 @@ func PostMessage(c *gin.Context) {
 
 }
 
-func GetMessage(c *gin.Context) {
-	fmt.Println("hello")
+func GetMessages(c *gin.Context) {
+	sender := c.Query("sender")
+	recipient := c.Query("recipient")
+	var user defs.User
+	var messages []defs.Message
+
+	user.Username = sender
+
+	// Authenticate request first
+	token, err := ParseTokenFromHeader(c)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	_, err = ValidateToken(user, token)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	// Query database
+	rows, err := db.Pool.Query(context.Background(), fmt.Sprintf(
+		`SELECT t1.username AS sender, t2.username AS recipient, message_body
+		FROM
+			(SELECT message_id, username, message_body
+			FROM message 
+			INNER JOIN "user" ON message.author_id = "user".user_id
+			WHERE username = '%s'
+			ORDER BY creation_date ASC) t1
+		LEFT JOIN
+			(SELECT username, message_id
+			FROM recipient
+			INNER JOIN "user" on recipient.user_id = "user".user_id
+			WHERE username = '%s') t2
+		ON t1.message_id = t2.message_id
+		LIMIT 15`, sender, recipient))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Query failed: %v\n", err)
+		return
+	}
+
+	// Releases any resources held by the rows no matter how the function returns.
+	// Looping all the way through the rows also closes it implicitly,
+	// but it is better to use defer to make sure rows is closed no matter what.
+	defer rows.Close()
+
+	// Iterate through all rows returned from the query.
+	for rows.Next() {
+		// Loop through rows, using Scan to assign column data to struct fields.
+		var message defs.Message
+		if err := rows.Scan(&message.Sender, &message.Recipient, &message.Message_Body); err != nil {
+			c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Query failed: %v", err))
+			return
+		}
+		messages = append(messages, message)
+	}
+
+	// Check if there were any issues when reading rows.
+	if err := rows.Err(); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Error reading queries: %v", err))
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, messages)
 }
