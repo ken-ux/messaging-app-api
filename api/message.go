@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -85,6 +84,18 @@ func GetMessages(c *gin.Context) {
 		return
 	}
 
+	if err := queryMessages(&messages, sender, recipient); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+	}
+
+	// if err := queryMessages(&messages, recipient, sender); err != nil {
+	// 	c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+	// }
+
+	c.IndentedJSON(http.StatusOK, messages)
+}
+
+func queryMessages(messages *[]defs.Message, sender string, recipient string) (err error) {
 	// Query database
 	rows, err := db.Pool.Query(context.Background(), fmt.Sprintf(
 		`SELECT t1.username AS sender, t2.username AS recipient, message_body
@@ -102,8 +113,7 @@ func GetMessages(c *gin.Context) {
 		ON t1.message_id = t2.message_id
 		LIMIT 15`, sender, recipient))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Query failed: %v\n", err)
-		return
+		return fmt.Errorf("query failed: %v", err)
 	}
 
 	// Releases any resources held by the rows no matter how the function returns.
@@ -116,17 +126,14 @@ func GetMessages(c *gin.Context) {
 		// Loop through rows, using Scan to assign column data to struct fields.
 		var message defs.Message
 		if err := rows.Scan(&message.Sender, &message.Recipient, &message.Message_Body); err != nil {
-			c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Query failed: %v", err))
-			return
+			return fmt.Errorf("query failed: %v", err)
 		}
-		messages = append(messages, message)
+		*messages = append(*messages, message)
 	}
 
 	// Check if there were any issues when reading rows.
 	if err := rows.Err(); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Error reading queries: %v", err))
-		return
+		return fmt.Errorf("query failed: %v", err)
 	}
-
-	c.IndentedJSON(http.StatusOK, messages)
+	return nil
 }
