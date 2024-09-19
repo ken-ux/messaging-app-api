@@ -8,8 +8,8 @@ type User struct {
 }
 
 type Message struct {
-	Sender        string    `json:"sender" binding:"required"`
-	Recipient     string    `json:"recipient" binding:"required"`
-	Message_Body  string    `json:"message_body" binding:"required"`
-	Creation_Date time.Time `json:"creation_date,omitempty"`
+	Sender        string     `json:"sender" binding:"required"`
+	Recipient     string     `json:"recipient" binding:"required"`
+	Message_Body  string     `json:"message_body" binding:"required"`
+	Creation_Date *time.Time `json:"creation_date,omitempty"`
 }
