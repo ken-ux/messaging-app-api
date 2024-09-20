@@ -103,11 +103,11 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 			(SELECT t1.username AS sender, t2.username AS recipient, message_body, creation_date
 			FROM
 				(SELECT message_id, username, message_body, creation_date
-				FROM message 
+				FROM message
 				INNER JOIN "user" ON message.author_id = "user".user_id
 				WHERE username = '%s'
 				ORDER BY creation_date ASC) t1
-			LEFT JOIN
+			INNER JOIN
 				(SELECT username, message_id
 				FROM recipient
 				INNER JOIN "user" on recipient.user_id = "user".user_id
@@ -117,11 +117,11 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 			(SELECT t1.username AS sender, t2.username AS recipient, message_body, creation_date
 			FROM
 				(SELECT message_id, username, message_body, creation_date
-				FROM message 
+				FROM message
 				INNER JOIN "user" ON message.author_id = "user".user_id
 				WHERE username = '%s'
 				ORDER BY creation_date ASC) t1
-			LEFT JOIN
+			INNER JOIN
 				(SELECT username, message_id
 				FROM recipient
 				INNER JOIN "user" on recipient.user_id = "user".user_id
@@ -130,7 +130,6 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 		ORDER BY creation_date
 		LIMIT 15`, sender, recipient, recipient, sender))
 	if err != nil {
-		fmt.Println(err)
 		return fmt.Errorf("query failed: %v", err)
 	}
 
@@ -144,7 +143,6 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 		// Loop through rows, using Scan to assign column data to struct fields.
 		var message defs.Message
 		if err := rows.Scan(&message.Sender, &message.Recipient, &message.Message_Body, &message.Creation_Date); err != nil {
-			fmt.Println(err)
 			return fmt.Errorf("query failed: %v", err)
 		}
 		*messages = append(*messages, message)
