@@ -88,10 +88,6 @@ func GetMessages(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
 	}
 
-	// if err := queryMessages(&messages, recipient, sender); err != nil {
-	// 	c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
-	// }
-
 	c.IndentedJSON(http.StatusOK, messages)
 }
 
