@@ -55,6 +55,7 @@ func main() {
 	router.GET("/ws", ws.StartSocket)
 	router.POST("/message", api.PostMessage)
 	router.GET("/message", api.GetMessages)
+	router.GET("/profile", api.GetProfile)
 
 	router.Run()
 }

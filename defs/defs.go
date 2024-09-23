@@ -13,3 +13,8 @@ type Message struct {
 	Message_Body  string     `json:"message_body" binding:"required"`
 	Creation_Date *time.Time `json:"creation_date,omitempty"`
 }
+
+type Profile struct {
+	Description string `json:"description"`
+	Color       []byte `json:"color,omitempty"`
+}
