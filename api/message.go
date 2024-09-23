@@ -106,7 +106,7 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 			INNER JOIN
 				(SELECT username, message_id
 				FROM recipient
-				INNER JOIN "user" on recipient.user_id = "user".user_id
+				INNER JOIN "user" ON recipient.user_id = "user".user_id
 				WHERE username = '%s') t2
 			ON t1.message_id = t2.message_id) tbl_1
 		UNION
