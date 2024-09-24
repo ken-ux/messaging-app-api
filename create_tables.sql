@@ -10,7 +10,7 @@ CREATE TABLE
 CREATE TABLE
     settings (
         settings_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-        user_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL UNIQUE,
         description VARCHAR(100),
         color BYTEA,
         FOREIGN KEY (user_id) REFERENCES "user" (user_id) -- "user" is in double quotes it's a reserved word.
