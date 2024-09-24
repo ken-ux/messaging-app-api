@@ -16,5 +16,5 @@ type Message struct {
 
 type Profile struct {
 	Description string `json:"description"`
-	Color       []byte `json:"color,omitempty"`
+	Color       string `json:"color,omitempty"`
 }
