@@ -56,6 +56,7 @@ func main() {
 	router.POST("/message", api.PostMessage)
 	router.GET("/message", api.GetMessages)
 	router.GET("/profile", api.GetProfile)
+	router.PUT("/profile", api.UpdateProfile)
 
 	router.Run()
 }
