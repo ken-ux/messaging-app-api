@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
 	"github.com/ken-ux/messaging-app-api/db"
 	"github.com/ken-ux/messaging-app-api/defs"
 )
@@ -28,10 +27,6 @@ func GetProfile(c *gin.Context) {
 	)).Scan(&profile.Description, &profile.Color)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			c.IndentedJSON(http.StatusNotFound, "profile not found")
-			return
-		}
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("query error: %v", err))
 		return
 	}
