@@ -21,15 +21,21 @@ func GetProfile(c *gin.Context) {
 	}
 
 	err := db.Pool.QueryRow(context.Background(), fmt.Sprintf(
-		`SELECT description
+		`SELECT description, CONVERT_FROM(color, 'utf-8')
 		FROM settings
 		LEFT JOIN "user" ON settings.user_id = "user".user_id
 		WHERE username = '%s'`, user.Username,
-	)).Scan(&profile.Description)
-	if err != pgx.ErrNoRows {
+	)).Scan(&profile.Description, &profile.Color)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			c.IndentedJSON(http.StatusNotFound, "profile not found")
+			return
+		}
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("query error: %v", err))
 		return
 	}
+
 	c.IndentedJSON(http.StatusOK, profile)
 }
 
