@@ -98,3 +98,54 @@ func UpdateProfile(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, "ok")
 }
+
+func DeleteProfile(c *gin.Context) {
+	user := defs.User{Username: c.Query("username")}
+
+	if user.Username == "" {
+		c.IndentedJSON(http.StatusBadRequest, "user not specified")
+		return
+	}
+
+	// Authenticate request first
+	token, err := ParseTokenFromHeader(c)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	_, err = ValidateToken(user, token)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	// Begin transaction.
+	tx, err := db.Pool.Begin(context.Background())
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	// Rollback transaction if it doesn't commit successfully.
+	defer tx.Rollback(context.Background())
+
+	// Execute insert statement.
+	_, err = tx.Exec(context.Background(), fmt.Sprintf(
+		`DELETE FROM "user"
+		WHERE username = '%s'`,
+		user.Username))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	// Commit transaction.
+	err = tx.Commit(context.Background())
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, "ok")
+}
