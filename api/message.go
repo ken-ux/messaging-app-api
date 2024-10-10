@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,9 @@ func PostMessage(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, fmt.Sprintf("Bad request: %v", err))
 		return
 	}
+
+	// Append apostrophes with extra apostrophe, otherwise throws SQL error.
+	message.Message_Body = strings.Replace(message.Message_Body, "'", "''", -1)
 
 	// Begin transaction.
 	tx, err := db.Pool.Begin(context.Background())
