@@ -128,7 +128,7 @@ func queryMessages(messages *[]defs.Message, sender string, recipient string) (e
 				INNER JOIN "user" on recipient.user_id = "user".user_id
 				WHERE username = '%s') t2
 			ON t1.message_id = t2.message_id)
-		ORDER BY creation_date
+		ORDER BY creation_date DESC
 		LIMIT 15`, sender, recipient, recipient, sender))
 	if err != nil {
 		return fmt.Errorf("query failed: %v", err)
