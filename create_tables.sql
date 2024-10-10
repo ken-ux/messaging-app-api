@@ -14,6 +14,7 @@ CREATE TABLE
         description VARCHAR(100),
         color BYTEA,
         FOREIGN KEY (user_id) REFERENCES "user" (user_id) -- "user" is in double quotes it's a reserved word.
+        ON DELETE CASCADE
     );
 
 -- Create table for message data.
@@ -23,7 +24,7 @@ CREATE TABLE
         author_id INTEGER NOT NULL,
         message_body VARCHAR(200) NOT NULL,
         creation_date TIMESTAMP NOT NULL,
-        FOREIGN KEY (author_id) REFERENCES "user" (user_id)
+        FOREIGN KEY (author_id) REFERENCES "user" (user_id) ON DELETE CASCADE
     );
 
 -- Create table to link recipients to messages.
@@ -32,6 +33,6 @@ CREATE TABLE
         recipient_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         user_id INTEGER NOT NULL,
         message_id INTEGER NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES "user" (user_id),
-        FOREIGN KEY (message_id) REFERENCES message (message_id)
+        FOREIGN KEY (user_id) REFERENCES "user" (user_id) ON DELETE CASCADE,
+        FOREIGN KEY (message_id) REFERENCES message (message_id) ON DELETE CASCADE
     );
