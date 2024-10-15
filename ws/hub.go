@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -34,11 +33,11 @@ func StartSocket(c *gin.Context) {
 
 	c1 := make(chan string)
 
-	go sendMessage(conn)
 	go receiveMessage(conn, c1)
 
 	for msg := range c1 {
 		fmt.Println(msg)
+		sendMessage(conn, msg)
 	}
 }
 
@@ -54,12 +53,9 @@ func receiveMessage(conn *websocket.Conn, c1 chan string) {
 	}
 }
 
-func sendMessage(conn *websocket.Conn) {
-	for {
-		// conn.WriteMessage(websocket.TextMessage, []byte("Hello, WebSocket!"))
-		time.Sleep(time.Second * 2)
-		if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-			break
-		}
+func sendMessage(conn *websocket.Conn, msg string) {
+	conn.WriteMessage(websocket.TextMessage, []byte(msg))
+	if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+		fmt.Printf("error: %v", err)
 	}
 }
