@@ -6,6 +6,10 @@ The backend is main focus of this project, so there's much more that I experimen
 
 The frontend repository can be found here: https://github.com/ken-ux/messaging-app
 
+## Database Schema
+
+![database schema](/database_schema.svg)
+
 ## File Structure
 
 These are the folders in this project and information about the files contained in them.
